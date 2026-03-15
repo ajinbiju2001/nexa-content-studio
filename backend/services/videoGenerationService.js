@@ -140,13 +140,26 @@ if (renderedVideo.filePath) {
     const videoFileName = `video-${id}.mp4`;
     const videoSavePath = path.join(videosDir, videoFileName);
     fs.copyFileSync(renderedVideo.filePath, videoSavePath);
-    videoUrl = `/uploads/videos/${videoFileName}`;
-    console.log(`[nexa] Video saved locally: ${videoUrl}`);
+
+    // ✅ Use Railway backend URL
+    const backendUrl = process.env.RAILWAY_PUBLIC_DOMAIN
+      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+      : process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || 'http://localhost:4000';
+
+    videoUrl = `${backendUrl}/uploads/videos/${videoFileName}`;
+    console.log(`[nexa] Video saved: ${videoUrl}`);
   } catch (err) {
     warnings.push(`Video save failed: ${err.message}`);
     console.error('[nexa] Video save error:', err.message);
   }
 }
+```
+
+---
+
+## Then add to Railway Variables:
+```
+RAILWAY_PUBLIC_DOMAIN=nexa-content-studio-production.up.railway.app
 
   // 6. Cleanup temp files
   cleanupFiles(narration.filePath, renderedVideo.filePath);
