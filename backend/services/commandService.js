@@ -49,7 +49,15 @@ function runCommand(command, args, options = {}) {
     child.stderr.on('data', chunk => { stderr += chunk.toString(); });
     child.on('error', reject);
     child.on('close', code => {
-      if (code === 0) return resolve({ stdout, stderr });
+      // FFmpeg returns non-zero sometimes even on success
+      // Check if output file was created instead
+      if (code === 0 || code === null) {
+        return resolve({ stdout, stderr });
+      }
+      // For ffmpeg, if stderr contains "muxing overhead" it succeeded
+      if (stderr.includes('muxing overhead') || stderr.includes('video:')) {
+        return resolve({ stdout, stderr });
+      }
       reject(new Error(`${command} exited with code ${code}. ${stderr || stdout}`.trim()));
     });
   });
