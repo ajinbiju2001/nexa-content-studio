@@ -1,0 +1,9 @@
+.next
+node_modules
+.env
+.DS_Store
+uploads/audio
+uploads/temp
+uploads/videos
+uploads/thumbnails
+uploads/videos
