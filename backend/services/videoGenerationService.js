@@ -13,22 +13,45 @@ const { runCommand, hasCommand, getFFmpegPath } = require('./commandService');
 async function createNarrationAudio({ script, voice }) {
   const tmpFile = path.join(os.tmpdir(), `nexa-audio-${uuidv4()}`);
   const scriptText = String(script || '').replace(/\s+/g, ' ').trim();
+  const ffmpegPath = await getFFmpegPath() || 'ffmpeg';
 
+  // Try edge-tts (free Microsoft AI voice)
+  try {
+    const { execSync } = require('child_process');
+    const voiceName = voice === 'male'
+      ? 'en-US-GuyNeural'
+      : 'en-US-JennyNeural';
+    const mp3File = `${tmpFile}.mp3`;
+    const m4aFile = `${tmpFile}.m4a`;
+
+    execSync(`edge-tts --voice ${voiceName} --text "${scriptText.replace(/"/g, "'")}" --write-media ${mp3File}`, {
+      timeout: 30000,
+    });
+
+    // Convert to m4a
+    await runCommand(ffmpegPath, ['-y', '-i', mp3File, '-c:a', 'aac', m4aFile]);
+    console.log('[nexa] Audio done (edge-tts)');
+    return { filePath: m4aFile, provider: 'edge-tts' };
+  } catch (err) {
+    console.warn('[nexa] edge-tts failed:', err.message);
+  }
+
+  // macOS say command fallback
   if (process.platform === 'darwin' && await hasCommand('say', '-v')) {
     const macVoice = voice === 'male' ? 'Daniel' : 'Samantha';
     const aiffFile = `${tmpFile}.aiff`;
     const m4aFile = `${tmpFile}.m4a`;
     await runCommand('say', ['-v', macVoice, '-o', aiffFile, scriptText]);
     if (await hasCommand('ffmpeg')) {
-      await runCommand('ffmpeg', ['-y', '-i', aiffFile, m4aFile]);
+      await runCommand(ffmpegPath, ['-y', '-i', aiffFile, m4aFile]);
       return { filePath: m4aFile, provider: 'say+ffmpeg' };
     }
     return { filePath: aiffFile, provider: 'say' };
   }
 
+  // FFmpeg sine tone last resort
   if (await hasCommand('ffmpeg')) {
     const outFile = `${tmpFile}.m4a`;
-    const ffmpegPath = await getFFmpegPath() || 'ffmpeg';
     await runCommand(ffmpegPath, [
       '-y', '-f', 'lavfi',
       '-i', 'sine=frequency=220:duration=30',
