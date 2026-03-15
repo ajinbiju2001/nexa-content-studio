@@ -27,10 +27,15 @@ try {
 
   await tts.setMetadata(voiceName, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
-  // Use toFile instead of toStream
-  const { audio } = await tts.toFile(mp3File, scriptText);
+  // toFile needs a DIRECTORY not a file path
+  const audioDir = path.join(os.tmpdir(), `nexa-tts-${uuidv4()}`);
+  fs.mkdirSync(audioDir, { recursive: true });
 
-  await runCommand(ffmpegPath, ['-y', '-i', mp3File, '-c:a', 'aac', m4aFile]);
+  const { fileName } = await tts.toFile(audioDir, scriptText);
+  const generatedFile = path.join(audioDir, fileName);
+
+  // Convert to m4a
+  await runCommand(ffmpegPath, ['-y', '-i', generatedFile, '-c:a', 'aac', m4aFile]);
   console.log('[nexa] Audio done (msedge-tts)');
   return { filePath: m4aFile, provider: 'edge-tts' };
 } catch (err) {
