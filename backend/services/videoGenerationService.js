@@ -14,53 +14,44 @@ async function createNarrationAudio({ script, voice }) {
   const tmpFile = path.join(os.tmpdir(), `nexa-audio-${uuidv4()}`);
   const scriptText = String(script || '').replace(/\s+/g, ' ').trim();
   const ffmpegPath = await getFFmpegPath() || 'ffmpeg';
+  const mp3File = `${tmpFile}.mp3`;
+  const m4aFile = `${tmpFile}.m4a`;
 
-  // Try edge-tts (free Microsoft AI voice)
+  // Try edge-tts-node (free Microsoft AI voice — no Python needed)
   try {
-    const { execSync } = require('child_process');
+    const EdgeTTS = require('edge-tts-node');
+    const tts = new EdgeTTS();
     const voiceName = voice === 'male'
       ? 'en-US-GuyNeural'
       : 'en-US-JennyNeural';
-    const mp3File = `${tmpFile}.mp3`;
-    const m4aFile = `${tmpFile}.m4a`;
 
-    execSync(`edge-tts --voice ${voiceName} --text "${scriptText.replace(/"/g, "'")}" --write-media ${mp3File}`, {
-      timeout: 30000,
-    });
+    await tts.synthesize(scriptText, voiceName, { saveFile: mp3File });
 
-    // Convert to m4a
+    // Convert mp3 to m4a using ffmpeg
     await runCommand(ffmpegPath, ['-y', '-i', mp3File, '-c:a', 'aac', m4aFile]);
-    console.log('[nexa] Audio done (edge-tts)');
+    console.log('[nexa] Audio done (edge-tts-node)');
     return { filePath: m4aFile, provider: 'edge-tts' };
   } catch (err) {
-    console.warn('[nexa] edge-tts failed:', err.message);
+    console.warn('[nexa] edge-tts-node failed:', err.message);
   }
 
   // macOS say command fallback
   if (process.platform === 'darwin' && await hasCommand('say', '-v')) {
     const macVoice = voice === 'male' ? 'Daniel' : 'Samantha';
     const aiffFile = `${tmpFile}.aiff`;
-    const m4aFile = `${tmpFile}.m4a`;
     await runCommand('say', ['-v', macVoice, '-o', aiffFile, scriptText]);
-    if (await hasCommand('ffmpeg')) {
-      await runCommand(ffmpegPath, ['-y', '-i', aiffFile, m4aFile]);
-      return { filePath: m4aFile, provider: 'say+ffmpeg' };
-    }
-    return { filePath: aiffFile, provider: 'say' };
+    await runCommand(ffmpegPath, ['-y', '-i', aiffFile, m4aFile]);
+    return { filePath: m4aFile, provider: 'say' };
   }
 
-  // FFmpeg sine tone last resort
-  if (await hasCommand('ffmpeg')) {
-    const outFile = `${tmpFile}.m4a`;
-    await runCommand(ffmpegPath, [
-      '-y', '-f', 'lavfi',
-      '-i', 'sine=frequency=220:duration=30',
-      '-c:a', 'aac', outFile,
-    ]);
-    return { filePath: outFile, provider: 'ffmpeg-tone' };
-  }
-
-  return { filePath: null, provider: 'none' };
+  // Beep tone last resort
+  const outFile = `${tmpFile}.m4a`;
+  await runCommand(ffmpegPath, [
+    '-y', '-f', 'lavfi',
+    '-i', 'sine=frequency=220:duration=30',
+    '-c:a', 'aac', outFile,
+  ]);
+  return { filePath: outFile, provider: 'ffmpeg-tone' };
 }
 
 // ─── Video rendering ──────────────────────────────────────────────────────────

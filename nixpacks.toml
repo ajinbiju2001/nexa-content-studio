@@ -1,8 +1,5 @@
 [phases.setup]
-nixPkgs = ["ffmpeg", "python3"]
-
-[phases.install]
-cmds = ["pip install edge-tts"]
+nixPkgs = ["ffmpeg"]
 
 [start]
 cmd = "node backend/server.js"
