@@ -132,7 +132,7 @@ async function generateVideoProject(input) {
   if (renderedVideo.filePath) {
     try {
       const videoBuffer = fs.readFileSync(renderedVideo.filePath);
-      const uploaded = await uploadVideo(videoBuffer, `video-${id}`);
+      const uploaded = await uploadVideo(videoBuffer, `video-${id}`, 'mp4');
       videoUrl = uploaded.url;
       console.log(`[nexa] Video uploaded to Cloudinary: ${videoUrl}`);
     } catch (err) {

@@ -77,16 +77,27 @@ async function uploadSVG(svgString, publicId) {
 /**
  * Upload an MP4 video file (Buffer or path) to Cloudinary
  */
-async function uploadVideo(buffer, publicId) {
+async function uploadVideo(buffer, publicId, format = 'mp4') {
   if (!isConfigured()) {
     console.warn('[nexa] Cloudinary not configured. Video upload skipped.');
     return { url: null, publicId: null };
   }
 
-  return uploadBuffer(buffer, {
-    public_id: publicId,
-    resource_type: 'video',
-    folder: 'nexa/videos',
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: 'video',
+        folder: 'nexa/videos',
+        public_id: publicId,
+        format: format,
+        overwrite: true,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve({ url: result.secure_url, publicId: result.public_id });
+      }
+    );
+    Readable.from(buffer).pipe(uploadStream);
   });
 }
 
