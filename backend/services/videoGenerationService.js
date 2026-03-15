@@ -18,7 +18,7 @@ async function createNarrationAudio({ script, voice }) {
   const m4aFile = `${tmpFile}.m4a`;
 
   // Try edge-tts-node
- try {
+try {
   const { MsEdgeTTS, OUTPUT_FORMAT } = require('msedge-tts');
   const tts = new MsEdgeTTS();
   const voiceName = voice === 'male'
@@ -26,14 +26,9 @@ async function createNarrationAudio({ script, voice }) {
     : 'en-US-JennyNeural';
 
   await tts.setMetadata(voiceName, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
-  const readable = tts.toStream(scriptText);
 
-  await new Promise((resolve, reject) => {
-    const writeStream = fs.createWriteStream(mp3File);
-    readable.pipe(writeStream);
-    writeStream.on('finish', resolve);
-    writeStream.on('error', reject);
-  });
+  // Use toFile instead of toStream
+  const { audio } = await tts.toFile(mp3File, scriptText);
 
   await runCommand(ffmpegPath, ['-y', '-i', mp3File, '-c:a', 'aac', m4aFile]);
   console.log('[nexa] Audio done (msedge-tts)');
