@@ -52,19 +52,41 @@ async function renderVideoFile({ title, audioPath, duration = 30 }) {
 
   const tmpOut = path.join(os.tmpdir(), `nexa-video-${uuidv4()}.mp4`);
 
-  const args = audioPath
-    ? [
-        '-y', '-f', 'lavfi', '-i', `color=c=#111827:s=1080x1920:d=${duration}`,
-        '-i', audioPath,
-        '-c:v', 'libx264', '-t', String(duration),
-        '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-shortest', tmpOut,
-      ]
-    : [
-        '-y', '-f', 'lavfi', '-i', `color=c=#111827:s=1080x1920:d=${duration}`,
-        '-f', 'lavfi', '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
-        '-c:v', 'libx264', '-t', String(duration),
-        '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-shortest', tmpOut,
-      ];
+const args = audioPath
+  ? [
+      '-y',
+      '-f', 'lavfi',
+      '-i', `color=c=#111827:s=1080x1920:r=30`,
+      '-i', audioPath,
+      '-c:v', 'libx264',
+      '-preset', 'ultrafast',
+      '-tune', 'stillimage',
+      '-crf', '28',
+      '-t', String(duration),
+      '-pix_fmt', 'yuv420p',
+      '-c:a', 'aac',
+      '-b:a', '128k',
+      '-movflags', '+faststart',
+      '-shortest',
+      outputPath,
+    ]
+  : [
+      '-y',
+      '-f', 'lavfi',
+      '-i', `color=c=#111827:s=1080x1920:r=30`,
+      '-f', 'lavfi',
+      '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
+      '-c:v', 'libx264',
+      '-preset', 'ultrafast',
+      '-crf', '28',
+      '-t', String(duration),
+      '-pix_fmt', 'yuv420p',
+      '-c:a', 'aac',
+      '-b:a', '128k',
+      '-movflags', '+faststart',
+      '-shortest',
+      outputPath,
+    ];
 
  const ffmpegPath = await getFFmpegPath() || 'ffmpeg';
 await runCommand(ffmpegPath, args);
