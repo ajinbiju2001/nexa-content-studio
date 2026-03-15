@@ -7,7 +7,6 @@ const { generateShortScript } = require('./openaiService');
 const { generateThumbnailAsset } = require('./thumbnailService');
 const { uploadVideo } = require('./cloudinaryService');
 const { insertVideo } = require('./supabaseService');
-const { runCommand, hasCommand } = require('./commandService');
 const { runCommand, hasCommand, getFFmpegPath } = require('./commandService');
 // ─── Audio generation ─────────────────────────────────────────────────────────
 
