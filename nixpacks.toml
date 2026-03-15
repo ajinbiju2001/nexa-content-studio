@@ -1,5 +1,2 @@
 [phases.setup]
-nixPkgs = ["ffmpeg"]
-
-[start]
-cmd = "node backend/server.js"
+nixPkgs = ["nodejs_22", "npm-9_x", "ffmpeg"]
