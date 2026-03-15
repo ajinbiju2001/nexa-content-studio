@@ -17,34 +17,32 @@ async function createNarrationAudio({ script, voice }) {
   const mp3File = `${tmpFile}.mp3`;
   const m4aFile = `${tmpFile}.m4a`;
 
-  // Try edge-tts-node (free Microsoft AI voice — no Python needed)
-  try {
-    const EdgeTTS = require('edge-tts-node');
-    const tts = new EdgeTTS();
-    const voiceName = voice === 'male'
-      ? 'en-US-GuyNeural'
-      : 'en-US-JennyNeural';
+  // Try edge-tts-node
+ try {
+  const { MsEdgeTTS, OUTPUT_FORMAT } = require('msedge-tts');
+  const tts = new MsEdgeTTS();
+  const voiceName = voice === 'male'
+    ? 'en-US-GuyNeural'
+    : 'en-US-JennyNeural';
 
-    await tts.synthesize(scriptText, voiceName, { saveFile: mp3File });
+  await tts.setMetadata(voiceName, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+  const readable = tts.toStream(scriptText);
 
-    // Convert mp3 to m4a using ffmpeg
-    await runCommand(ffmpegPath, ['-y', '-i', mp3File, '-c:a', 'aac', m4aFile]);
-    console.log('[nexa] Audio done (edge-tts-node)');
-    return { filePath: m4aFile, provider: 'edge-tts' };
-  } catch (err) {
-    console.warn('[nexa] edge-tts-node failed:', err.message);
-  }
+  await new Promise((resolve, reject) => {
+    const writeStream = fs.createWriteStream(mp3File);
+    readable.pipe(writeStream);
+    writeStream.on('finish', resolve);
+    writeStream.on('error', reject);
+  });
 
-  // macOS say command fallback
-  if (process.platform === 'darwin' && await hasCommand('say', '-v')) {
-    const macVoice = voice === 'male' ? 'Daniel' : 'Samantha';
-    const aiffFile = `${tmpFile}.aiff`;
-    await runCommand('say', ['-v', macVoice, '-o', aiffFile, scriptText]);
-    await runCommand(ffmpegPath, ['-y', '-i', aiffFile, m4aFile]);
-    return { filePath: m4aFile, provider: 'say' };
-  }
+  await runCommand(ffmpegPath, ['-y', '-i', mp3File, '-c:a', 'aac', m4aFile]);
+  console.log('[nexa] Audio done (msedge-tts)');
+  return { filePath: m4aFile, provider: 'edge-tts' };
+} catch (err) {
+  console.warn('[nexa] msedge-tts failed:', err.message);
+}
 
-  // Beep tone last resort
+  // Beep tone fallback
   const outFile = `${tmpFile}.m4a`;
   await runCommand(ffmpegPath, [
     '-y', '-f', 'lavfi',
