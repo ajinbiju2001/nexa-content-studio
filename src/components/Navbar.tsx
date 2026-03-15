@@ -1,11 +1,15 @@
 'use client';
-import { Bell, Sun, Moon, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { Bell, Sun, Moon, ChevronDown, Menu } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { clearSession, getSession, SESSION_EVENT, updateSessionName } from '@/lib/session';
 
 interface NavbarProps {
   theme: string;
   toggleTheme: () => void;
   sidebarWidth: number;
+  isMobile: boolean;
+  onMenuToggle: () => void;
 }
 
 const notifications = [
@@ -15,24 +19,70 @@ const notifications = [
   { id: 4, text: 'Channel "AI Tools" synced', time: '3h ago', icon: '📺', read: true },
 ];
 
-export default function Navbar({ theme, toggleTheme, sidebarWidth }: NavbarProps) {
+export default function Navbar({ theme, toggleTheme, sidebarWidth, isMobile, onMenuToggle }: NavbarProps) {
   const [showNotifs, setShowNotifs] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [name, setName] = useState('User');
+  const [email, setEmail] = useState('');
+  const router = useRouter();
   const unread = notifications.filter(n => !n.read).length;
   const overlayShadow = '0 24px 70px rgba(2, 12, 16, 0.34)';
+  const initials = useMemo(() => name.trim().slice(0, 1).toUpperCase() || 'U', [name]);
+
+  useEffect(() => {
+    const syncSession = () => {
+      const session = getSession();
+      if (!session) return;
+      setName(session.name);
+      setEmail(session.email);
+    };
+
+    syncSession();
+    window.addEventListener(SESSION_EVENT, syncSession);
+    return () => window.removeEventListener(SESSION_EVENT, syncSession);
+  }, []);
+
+  const handleSaveName = () => {
+    const next = updateSessionName(name);
+    if (next) setName(next.name);
+    setEditingName(false);
+  };
+
+  const handleLogout = () => {
+    clearSession();
+    router.push('/login');
+  };
 
   return (
     <header className="glass-static" style={{
       position: 'fixed', top: 0, left: sidebarWidth, right: 0, height: 64, zIndex: 99,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 24px', borderBottom: '1px solid var(--border)', borderRadius: 0,
+      padding: isMobile ? '0 14px' : '0 24px', borderBottom: '1px solid var(--border)', borderRadius: 0,
     }}>
-      <div>
-        <div className="font-display" style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
-          Nexa Studio
-        </div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>
-          AI content dashboard
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+        {isMobile && (
+          <button
+            onClick={onMenuToggle}
+            aria-label="Open navigation menu"
+            style={{
+              width: 38, height: 38, borderRadius: 10, border: '1px solid var(--border)',
+              background: 'var(--bg-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--text-secondary)', flexShrink: 0,
+            }}
+          >
+            <Menu size={18} />
+          </button>
+        )}
+        <div style={{ minWidth: 0 }}>
+          <div className="font-display" style={{ fontSize: isMobile ? 16 : 18, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+            Nexa Studio
+          </div>
+          {!isMobile && (
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>
+              AI content dashboard
+            </div>
+          )}
         </div>
       </div>
 
@@ -106,27 +156,67 @@ export default function Navbar({ theme, toggleTheme, sidebarWidth }: NavbarProps
               background: 'var(--gradient-main)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 13, fontWeight: 700, color: 'white', flexShrink: 0,
-            }}>A</div>
-            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>Alex</span>
-            <ChevronDown size={12} color="var(--text-muted)" />
+            }}>{initials}</div>
+            {!isMobile && <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{name}</span>}
+            {!isMobile && <ChevronDown size={12} color="var(--text-muted)" />}
           </button>
 
           {showProfile && (
             <div className="panel-solid" style={{
-              position: 'absolute', top: '110%', right: 0, width: 200, borderRadius: 12,
+              position: 'absolute', top: '110%', right: 0, width: 240, borderRadius: 12,
               boxShadow: overlayShadow, zIndex: 200, overflow: 'hidden', padding: '8px',
             }}>
-              {['Profile', 'Account Settings', 'Billing', 'Logout'].map(item => (
-                <button key={item} className="menu-item" style={{
-                  display: 'block', width: '100%', textAlign: 'left', padding: '9px 12px',
-                  borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer',
-                  color: item === 'Logout' ? 'var(--accent-danger)' : 'var(--text-secondary)',
-                  fontSize: 13, fontFamily: 'DM Sans, sans-serif',
-                  transition: 'background 0.15s, color 0.15s',
-                }}>
-                  {item}
-                </button>
-              ))}
+              <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--border)', marginBottom: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{name}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{email}</div>
+              </div>
+              <div style={{ padding: '4px 8px 10px' }}>
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, letterSpacing: '0.06em' }}>DISPLAY NAME</label>
+                <input
+                  className="nexa-input"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  readOnly={!editingName}
+                  style={{ fontSize: 13, padding: '9px 11px', opacity: editingName ? 1 : 0.8 }}
+                />
+                <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                  {editingName ? (
+                    <>
+                      <button
+                        onClick={handleSaveName}
+                        style={{ flex: 1, borderRadius: 8, border: 'none', padding: '8px 10px', background: 'var(--accent-1)', color: '#fff', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 600 }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => {
+                          const session = getSession();
+                          setName(session?.name || 'User');
+                          setEditingName(false);
+                        }}
+                        style={{ flex: 1, borderRadius: 8, border: '1px solid var(--border)', padding: '8px 10px', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setEditingName(true)}
+                      className="menu-item"
+                      style={{ width: '100%', textAlign: 'left', padding: '9px 12px', borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13, fontFamily: 'DM Sans, sans-serif' }}
+                    >
+                      Edit name
+                    </button>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="menu-item"
+                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 12px', borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--accent-danger)', fontSize: 13, fontFamily: 'DM Sans, sans-serif', transition: 'background 0.15s, color 0.15s' }}
+              >
+                Logout
+              </button>
             </div>
           )}
         </div>

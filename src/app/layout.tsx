@@ -7,6 +7,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <title>Nexa Content Studio</title>
         <meta name="description" content="Create Viral Content with AI" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/nexa-favicon.svg?v=4" type="image/svg+xml" />
         <link rel="shortcut icon" href="/nexa-favicon.svg?v=4" />
         <link rel="apple-touch-icon" href="/nexa-favicon.svg?v=4" />

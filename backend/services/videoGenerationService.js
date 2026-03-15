@@ -8,7 +8,7 @@ const { generateThumbnailAsset } = require('./thumbnailService');
 const { uploadVideo } = require('./cloudinaryService');
 const { insertVideo } = require('./supabaseService');
 const { runCommand, hasCommand } = require('./commandService');
-
+const { runCommand, hasCommand, getFFmpegPath } = require('./commandService');
 // ─── Audio generation ─────────────────────────────────────────────────────────
 
 async function createNarrationAudio({ script, voice }) {
@@ -67,7 +67,8 @@ async function renderVideoFile({ title, audioPath, duration = 30 }) {
         '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-shortest', tmpOut,
       ];
 
-  await runCommand('ffmpeg', args);
+ const ffmpegPath = await getFFmpegPath() || 'ffmpeg';
+await runCommand(ffmpegPath, args);
   return { filePath: tmpOut, warning: null };
 }
 

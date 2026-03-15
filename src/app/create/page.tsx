@@ -102,14 +102,14 @@ export default function CreatePage() {
 
   return (
     <DashboardLayout>
-      <div style={{ maxWidth: 900, margin: '0 auto' }}>
+      <div className="create-page" style={{ maxWidth: 900, margin: '0 auto' }}>
         <div style={{ marginBottom: 28 }}>
           <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, marginBottom: 6 }}>Create Video</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Choose a mode and let AI generate your content ✨</p>
         </div>
 
         {/* API status banner */}
-        <div className="glass-static" style={{ borderRadius: 12, padding: '11px 14px', marginBottom: 20, border: `1px solid ${apiStatus === 'offline' ? 'rgba(244,63,94,0.24)' : apiStatus === 'online' ? 'rgba(16,185,129,0.24)' : 'var(--border)'}`, background: apiStatus === 'offline' ? 'rgba(244,63,94,0.06)' : apiStatus === 'online' ? 'rgba(16,185,129,0.04)' : 'transparent', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="glass-static create-status-banner" style={{ borderRadius: 12, padding: '11px 14px', marginBottom: 20, border: `1px solid ${apiStatus === 'offline' ? 'rgba(244,63,94,0.24)' : apiStatus === 'online' ? 'rgba(16,185,129,0.24)' : 'var(--border)'}`, background: apiStatus === 'offline' ? 'rgba(244,63,94,0.06)' : apiStatus === 'online' ? 'rgba(16,185,129,0.04)' : 'transparent', display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 7, height: 7, borderRadius: '50%', background: apiStatus === 'offline' ? 'var(--accent-danger)' : apiStatus === 'online' ? 'var(--accent-success)' : '#888', flexShrink: 0 }} />
           <span style={{ fontSize: 12, fontWeight: 600, color: apiStatus === 'offline' ? 'var(--accent-danger)' : apiStatus === 'online' ? 'var(--accent-success)' : 'var(--text-muted)' }}>
             {apiStatus === 'checking' ? 'Checking backend...' : apiStatus === 'online' ? 'Backend connected — ready to generate' : 'Backend offline — run: npm run backend:start'}
@@ -117,7 +117,7 @@ export default function CreatePage() {
         </div>
 
         {/* Mode selector */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14, marginBottom: 28 }}>
+        <div className="create-mode-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14, marginBottom: 28 }}>
           {modes.map(m => {
             const Icon = m.icon;
             const active = selectedMode === m.id;
@@ -139,7 +139,7 @@ export default function CreatePage() {
         </div>
 
         {/* Form */}
-        <div className="glass-static" style={{ borderRadius: 16, padding: '28px', marginBottom: 20 }}>
+        <div className="glass-static create-form-card" style={{ borderRadius: 16, padding: '28px', marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
             <div style={{ width: 36, height: 36, borderRadius: 9, background: mode.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <ModeIcon size={18} color={mode.color} />
@@ -154,7 +154,7 @@ export default function CreatePage() {
             {/* Topic */}
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>TOPIC / IDEA *</label>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div className="create-topic-row" style={{ display: 'flex', gap: 8 }}>
                 <textarea className="nexa-input" placeholder={mode.placeholder} value={topic} onChange={e => setTopic(e.target.value)} rows={2} style={{ resize: 'none', flex: 1, lineHeight: 1.5 }} />
                 {selectedMode === 'ai' && (
                   <button onClick={() => setShowIdeas(!showIdeas)} style={{ padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border)', background: showIdeas ? 'rgba(99,102,241,0.1)' : 'var(--bg-card)', cursor: 'pointer', fontSize: 12, fontWeight: 500, color: showIdeas ? 'var(--accent-1)' : 'var(--text-secondary)', fontFamily: 'DM Sans, sans-serif', flexShrink: 0, alignSelf: 'flex-start', borderColor: showIdeas ? 'var(--accent-1)' : 'var(--border)' }}>
@@ -185,7 +185,7 @@ export default function CreatePage() {
             )}
 
             {/* Settings */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14 }}>
+            <div className="create-settings-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14 }}>
               {/* Duration */}
               <div>
                 <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>DURATION</label>
@@ -236,7 +236,7 @@ export default function CreatePage() {
             </div>
 
             {/* Buttons */}
-            <div style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
+            <div className="create-actions" style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
               <button onClick={handleGenerate} disabled={!topic || generating} className="btn-gradient"
                 style={{ flex: 1, padding: '13px', borderRadius: 12, fontSize: 15, fontWeight: 600, fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: (!topic || generating) ? 0.6 : 1, cursor: (!topic || generating) ? 'not-allowed' : 'pointer' }}>
                 {generating ? <><Loader size={16} style={{ animation: 'spin 0.7s linear infinite' }} />Generating...</> : done ? <><CheckCircle size={16} /> Video Ready!</> : <><Zap size={16} fill="white" />Generate {selectedMode === 'bulk' ? `${count} Shorts` : 'Video'}</>}
@@ -287,7 +287,7 @@ export default function CreatePage() {
         {/* Script output */}
         {generatedScript && (
           <div ref={scriptRef} className="glass-static" style={{ borderRadius: 14, padding: '20px', marginBottom: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div className="create-section-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div>
                 <div className="font-display" style={{ fontSize: 16, fontWeight: 700 }}>Generated Script</div>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Ready to record or narrate</div>
@@ -305,7 +305,7 @@ export default function CreatePage() {
         {/* Generated video result */}
         {generatedVideo && (
           <div className="glass-static" style={{ borderRadius: 14, padding: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
+            <div className="create-section-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
               <div>
                 <div className="font-display" style={{ fontSize: 16, fontWeight: 700 }}>Generated Project</div>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
@@ -317,7 +317,7 @@ export default function CreatePage() {
               </Link>
             </div>
             {generatedVideo.thumbnail_url && (
-              <img src={generatedVideo.thumbnail_url} alt={generatedVideo.title} style={{ width: 160, borderRadius: 10, border: '1px solid var(--border)', marginBottom: 14 }} />
+              <img className="create-result-thumb" src={generatedVideo.thumbnail_url} alt={generatedVideo.title} style={{ width: 160, borderRadius: 10, border: '1px solid var(--border)', marginBottom: 14 }} />
             )}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               {generatedVideo.video_url && (

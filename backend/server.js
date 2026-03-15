@@ -5,7 +5,7 @@ const cors = require('cors');
 const apiRoutes = require('./routes');
 
 const app = express();
-const PORT = Number(process.env.PORT || 8080);
+const PORT = Number(process.env.PORT || process.env.BACKEND_PORT || 8080);
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 // ✅ FIXED: locked to your frontend URL only (not open to all origins)

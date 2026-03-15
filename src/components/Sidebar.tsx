@@ -1,6 +1,6 @@
 'use client';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Video, Library, Image, Tv2, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Video, Library, Image, Tv2, Settings, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import BrandMark from '@/components/BrandMark';
 
 const navItems = [
@@ -15,15 +15,19 @@ const navItems = [
 interface SidebarProps {
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
+  isMobile: boolean;
+  mobileOpen: boolean;
+  setMobileOpen: (v: boolean) => void;
 }
 
-export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
+export default function Sidebar({ collapsed, setCollapsed, isMobile, mobileOpen, setMobileOpen }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const sidebarWidth = isMobile ? 280 : (collapsed ? 64 : 220);
 
   return (
     <aside className="sidebar glass-static" style={{
-      width: collapsed ? 64 : 220,
+      width: sidebarWidth,
       minHeight: '100vh',
       position: 'fixed',
       left: 0, top: 0,
@@ -31,11 +35,13 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
       zIndex: 100,
       borderRight: '1px solid var(--border)',
       borderRadius: 0,
+      transform: isMobile ? `translateX(${mobileOpen ? '0' : '-100%'})` : 'translateX(0)',
+      transition: 'transform 0.25s ease, width 0.25s ease',
     }}>
       {/* Logo */}
-      <div style={{ padding: collapsed ? '20px 0' : '20px 20px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid var(--border)', justifyContent: collapsed ? 'center' : 'flex-start', minHeight: 64 }}>
+      <div style={{ padding: isMobile ? '20px' : (collapsed ? '20px 0' : '20px 20px'), display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid var(--border)', justifyContent: isMobile || !collapsed ? 'flex-start' : 'center', minHeight: 64 }}>
         <BrandMark size={32} iconSize={16} radius={8} />
-        {!collapsed && (
+        {(isMobile || !collapsed) && (
           <div>
             <div className="font-display gradient-text" style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1 }}>
               NEXA
@@ -44,6 +50,15 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
               Studio
             </div>
           </div>
+        )}
+        {isMobile && (
+          <button
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close navigation menu"
+            style={{ marginLeft: 'auto', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+          >
+            <X size={18} />
+          </button>
         )}
       </div>
 
@@ -54,13 +69,16 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
           return (
             <button
               key={path}
-              onClick={() => router.push(path)}
+              onClick={() => {
+                router.push(path);
+                if (isMobile) setMobileOpen(false);
+              }}
               className={active ? 'nav-active' : ''}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
-                padding: collapsed ? '10px 0' : '10px 12px',
+                padding: isMobile ? '12px 14px' : (collapsed ? '10px 0' : '10px 12px'),
                 borderRadius: 10, width: '100%',
-                justifyContent: collapsed ? 'center' : 'flex-start',
+                justifyContent: isMobile || !collapsed ? 'flex-start' : 'center',
                 border: 'none', cursor: 'pointer',
                 background: active ? undefined : 'transparent',
                 color: active ? 'var(--accent-1)' : 'var(--text-secondary)',
@@ -71,26 +89,28 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
               }}
             >
               <Icon size={17} style={{ flexShrink: 0 }} />
-              {!collapsed && <span>{label}</span>}
+              {(isMobile || !collapsed) && <span>{label}</span>}
             </button>
           );
         })}
       </nav>
 
       {/* Collapse toggle */}
-      <div style={{ padding: '12px 8px', borderTop: '1px solid var(--border)' }}>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          style={{
-            width: '100%', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-end',
-            padding: '8px 12px', borderRadius: 8,
-            background: 'transparent', border: 'none', cursor: 'pointer',
-            color: 'var(--text-muted)', transition: 'color 0.15s',
-          }}
-        >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
-      </div>
+      {!isMobile && (
+        <div style={{ padding: '12px 8px', borderTop: '1px solid var(--border)' }}>
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-end',
+              padding: '8px 12px', borderRadius: 8,
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              color: 'var(--text-muted)', transition: 'color 0.15s',
+            }}
+          >
+            {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

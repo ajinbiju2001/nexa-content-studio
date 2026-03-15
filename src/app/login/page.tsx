@@ -3,18 +3,29 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react';
 import BrandMark from '@/components/BrandMark';
+import { AUTH_EMAIL, AUTH_PASSWORD, saveSession } from '@/lib/session';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 600));
+
+    if (email.trim().toLowerCase() !== AUTH_EMAIL || password !== AUTH_PASSWORD) {
+      setLoading(false);
+      setError('Use the approved Nexa credentials to sign in.');
+      return;
+    }
+
+    saveSession({ email: AUTH_EMAIL, name: 'Ajin' });
     router.push('/dashboard');
   };
 
@@ -97,6 +108,12 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {error && (
+              <div style={{ fontSize: 12, color: 'var(--accent-danger)', padding: '10px 12px', borderRadius: 10, background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.16)' }}>
+                {error}
+              </div>
+            )}
+
             <div style={{ textAlign: 'right' }}>
               <a href="#" style={{ fontSize: 12, color: 'var(--accent-1)', textDecoration: 'none', fontWeight: 500 }}>
                 Forgot password?
@@ -140,6 +157,9 @@ export default function LoginPage() {
             </div>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
               Your AI-powered content factory.
+            </p>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>
+              Login: {AUTH_EMAIL}
             </p>
           </div>
         </div>
