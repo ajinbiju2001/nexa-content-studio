@@ -1,4 +1,5 @@
 const { spawn } = require('child_process');
+const { execSync } = require('child_process');
 
 // Common FFmpeg paths on Railway/Nixpacks
 const FFMPEG_PATHS = [
@@ -7,7 +8,31 @@ const FFMPEG_PATHS = [
   '/usr/local/bin/ffmpeg',
   '/nix/var/nix/profiles/default/bin/ffmpeg',
   '/root/.nix-profile/bin/ffmpeg',
+  '/run/current-system/sw/bin/ffmpeg',
+  '/usr/local/nixpkgs/bin/ffmpeg',
 ];
+
+function findFFmpeg() {
+  try {
+    const path = execSync('which ffmpeg').toString().trim();
+    if (path) {
+      console.log(`[nexa] FFmpeg found at: ${path}`);
+      return path;
+    }
+  } catch {
+    try {
+      const path = execSync('find /nix -name ffmpeg -type f 2>/dev/null | head -1').toString().trim();
+      if (path) {
+        console.log(`[nexa] FFmpeg found at: ${path}`);
+        return path;
+      }
+    } catch {
+      console.warn('[nexa] FFmpeg not found via search');
+      return null;
+    }
+  }
+  return null;
+}
 
 function runCommand(command, args, options = {}) {
   return new Promise((resolve, reject) => {
@@ -31,8 +56,12 @@ function runCommand(command, args, options = {}) {
 }
 
 async function hasCommand(command, versionArg = '--version') {
-  // If checking ffmpeg, try all known paths
   if (command === 'ffmpeg') {
+    // Try dynamic search first
+    const dynamic = findFFmpeg();
+    if (dynamic) return true;
+
+    // Try known paths
     for (const path of FFMPEG_PATHS) {
       try {
         await runCommand(path, [versionArg]);
@@ -55,6 +84,11 @@ async function hasCommand(command, versionArg = '--version') {
 }
 
 async function getFFmpegPath() {
+  // Try dynamic search first
+  const dynamic = findFFmpeg();
+  if (dynamic) return dynamic;
+
+  // Try known paths
   for (const path of FFMPEG_PATHS) {
     try {
       await runCommand(path, ['--version']);
