@@ -85,8 +85,7 @@ app.use((err, _req, res, _next) => {
 });
 
 // ─── Start ────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`\n🚀 Nexa backend running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {  console.log(`\n🚀 Nexa backend running on http://localhost:${PORT}`);
   console.log(`   Cloudinary: ${process.env.CLOUDINARY_CLOUD_NAME ? '✅ configured' : '⚠️  not configured (thumbnails will use placeholder)'}`);
   console.log(`   Supabase:   ${process.env.SUPABASE_URL ? '✅ configured' : '⚠️  not configured (using in-memory store)'}`);
   console.log(`   AI:         ${process.env.GROQ_API_KEY ? '✅ Groq (free)' : process.env.OPENAI_API_KEY ? '✅ OpenAI' : '⚠️  fallback mode'}\n`);
