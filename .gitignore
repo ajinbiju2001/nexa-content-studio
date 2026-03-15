@@ -8,3 +8,4 @@ uploads/videos
 uploads/thumbnails
 uploads/videos
 .vercel
+tsconfig.tsbuildinfo
