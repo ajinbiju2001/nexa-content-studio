@@ -30,6 +30,7 @@ app.use(cors({
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static('uploads')); 
 
 // ─── Health & info routes ─────────────────────────────────────────────────────
 app.get('/', (_req, res) => {

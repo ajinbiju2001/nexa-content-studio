@@ -128,18 +128,25 @@ async function generateVideoProject(input) {
   if (renderedVideo.warning) warnings.push(renderedVideo.warning);
 
   // 5. Upload video to Cloudinary (if rendered)
-  let videoUrl = null;
-  if (renderedVideo.filePath) {
-    try {
-      const videoBuffer = fs.readFileSync(renderedVideo.filePath);
-      const uploaded = await uploadVideo(videoBuffer, `video-${id}`, 'mp4');
-      videoUrl = uploaded.url;
-      console.log(`[nexa] Video uploaded to Cloudinary: ${videoUrl}`);
-    } catch (err) {
-      warnings.push(`Video upload to Cloudinary failed: ${err.message}`);
-      console.error('[nexa] Cloudinary video upload error:', err.message);
+// 5. Upload thumbnail to Cloudinary, serve video directly
+let videoUrl = null;
+if (renderedVideo.filePath) {
+  try {
+    // Save video to uploads folder and serve directly
+    const videosDir = path.join(process.cwd(), 'uploads', 'videos');
+    if (!fs.existsSync(videosDir)) {
+      fs.mkdirSync(videosDir, { recursive: true });
     }
+    const videoFileName = `video-${id}.mp4`;
+    const videoSavePath = path.join(videosDir, videoFileName);
+    fs.copyFileSync(renderedVideo.filePath, videoSavePath);
+    videoUrl = `/uploads/videos/${videoFileName}`;
+    console.log(`[nexa] Video saved locally: ${videoUrl}`);
+  } catch (err) {
+    warnings.push(`Video save failed: ${err.message}`);
+    console.error('[nexa] Video save error:', err.message);
   }
+}
 
   // 6. Cleanup temp files
   cleanupFiles(narration.filePath, renderedVideo.filePath);
