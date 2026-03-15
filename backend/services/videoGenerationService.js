@@ -27,17 +27,23 @@ try {
 
   await tts.setMetadata(voiceName, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
-  // toFile needs a DIRECTORY not a file path
+  // Get audio as buffer directly
   const audioDir = path.join(os.tmpdir(), `nexa-tts-${uuidv4()}`);
   fs.mkdirSync(audioDir, { recursive: true });
 
-  const { fileName } = await tts.toFile(audioDir, scriptText);
-  const generatedFile = path.join(audioDir, fileName);
+  const result = await tts.toFile(audioDir, scriptText);
+  console.log('[nexa] toFile result:', JSON.stringify(result));
 
-  // Convert to m4a
-  await runCommand(ffmpegPath, ['-y', '-i', generatedFile, '-c:a', 'aac', m4aFile]);
-  console.log('[nexa] Audio done (msedge-tts)');
-  return { filePath: m4aFile, provider: 'edge-tts' };
+  // Find the generated file in the directory
+  const files = fs.readdirSync(audioDir);
+  console.log('[nexa] generated files:', files);
+
+  if (files.length > 0) {
+    const generatedFile = path.join(audioDir, files[0]);
+    await runCommand(ffmpegPath, ['-y', '-i', generatedFile, '-c:a', 'aac', m4aFile]);
+    console.log('[nexa] Audio done (msedge-tts)');
+    return { filePath: m4aFile, provider: 'edge-tts' };
+  }
 } catch (err) {
   console.warn('[nexa] msedge-tts failed:', err.message);
 }
